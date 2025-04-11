@@ -44,6 +44,9 @@ function setupAbstractCanvas() {
     let startX, startY;
     // 커서 크기를 추적할 변수
     let cursorSize = 10;
+    // 마지막 캔버스 상태 저장 변수
+    let canvasHistory = [];
+    let currentHistoryIndex = -1;
     
     // 캔버스 해상도 조정 (픽셀 정확도를 위해)
     function setupCanvas() {
@@ -130,9 +133,44 @@ function setupAbstractCanvas() {
         currentColor = this.value;
     });
 
+    // 현재 캔버스 상태를 저장하는 함수
+    function saveCanvasState() {
+        // 기록 추가 전에 현재 이후의 기록은 제거
+        if (currentHistoryIndex < canvasHistory.length - 1) {
+            canvasHistory = canvasHistory.slice(0, currentHistoryIndex + 1);
+        }
+        // 캔버스 현재 상태 저장
+        const imageData = canvas.toDataURL();
+        canvasHistory.push(imageData);
+        currentHistoryIndex = canvasHistory.length - 1;
+        
+        // 히스토리 크기 제한 (메모리 관리)
+        if (canvasHistory.length > 10) {
+            canvasHistory.shift();
+            currentHistoryIndex--;
+        }
+    }
+
+    // 저장된 캔버스 상태 복원
+    function restoreCanvasState(index) {
+        if (index >= 0 && index < canvasHistory.length) {
+            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = canvasHistory[index];
+            currentHistoryIndex = index;
+        }
+    }
+
     // Clear button
     clearBtn.addEventListener('click', function() {
+        // 클리어 전 현재 상태 저장
+        saveCanvasState();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 클리어 후 상태 저장
+        saveCanvasState();
     });
 
     // Save button
@@ -150,9 +188,14 @@ function setupAbstractCanvas() {
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         
+        const clientX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
+        
+        if (!clientX || !clientY) return null;
+        
         return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
         };
     }
 
@@ -163,15 +206,21 @@ function setupAbstractCanvas() {
     canvas.addEventListener('mouseout', stopDrawing);
 
     // Touch events for mobile
-    canvas.addEventListener('touchstart', handleTouchStart);
-    canvas.addEventListener('touchmove', handleTouchMove);
-    canvas.addEventListener('touchend', handleTouchEnd);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
 
     function startDrawing(e) {
         isDrawing = true;
         const pos = getExactMousePosition(e);
+        if (!pos) return;
+        
         startX = pos.x;
         startY = pos.y;
+        
+        // 그리기 시작 전 캔버스 상태 저장
+        saveCanvasState();
         
         // For free drawing, start a new path
         if (currentTool === 'free') {
@@ -187,6 +236,8 @@ function setupAbstractCanvas() {
         if (!isDrawing) return;
         
         const pos = getExactMousePosition(e);
+        if (!pos) return;
+        
         const x = pos.x;
         const y = pos.y;
         
@@ -200,6 +251,11 @@ function setupAbstractCanvas() {
         if (!isDrawing) return;
         
         const pos = getExactMousePosition(e);
+        if (!pos) {
+            isDrawing = false;
+            return;
+        }
+        
         const endX = pos.x;
         const endY = pos.y;
         
@@ -223,33 +279,46 @@ function setupAbstractCanvas() {
         }
         
         isDrawing = false;
+        
+        // 그리기 완료 후 캔버스 상태 저장
+        saveCanvasState();
     }
 
     // Touch event handlers
     function handleTouchStart(e) {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
+        startDrawing({
             clientX: touch.clientX,
             clientY: touch.clientY
         });
-        canvas.dispatchEvent(mouseEvent);
     }
 
     function handleTouchMove(e) {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
+        draw({
             clientX: touch.clientX,
             clientY: touch.clientY
         });
-        canvas.dispatchEvent(mouseEvent);
     }
 
     function handleTouchEnd(e) {
         e.preventDefault();
-        const mouseEvent = new MouseEvent('mouseup', {});
-        canvas.dispatchEvent(mouseEvent);
+        // 마지막 위치 정보가 없으므로 현재 상태에서 그리기 종료
+        if (isDrawing) {
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                stopDrawing({
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+            } else {
+                // 터치 좌표가 없는 경우
+                isDrawing = false;
+                saveCanvasState();
+            }
+        }
     }
 
     // Drawing functions
@@ -296,6 +365,9 @@ function setupAbstractCanvas() {
         ctx.stroke();
     }
 
+    // 초기 캔버스 상태 저장
+    saveCanvasState();
+
     // Example images preload
     loadExampleImages();
 }
@@ -313,6 +385,9 @@ function setupCroquisCanvas() {
     let lineThickness = 3;
     let timer = null;
     let timeLeft = 0;
+    // 캔버스 상태 저장 변수
+    let canvasHistory = [];
+    let currentHistoryIndex = -1;
     
     // 캔버스 해상도 조정
     function setupCanvas() {
@@ -380,10 +455,45 @@ function setupCroquisCanvas() {
         pencilBtn.classList.add('active');
     }
     
+    // 현재 캔버스 상태를 저장하는 함수
+    function saveCanvasState() {
+        // 기록 추가 전에 현재 이후의 기록은 제거
+        if (currentHistoryIndex < canvasHistory.length - 1) {
+            canvasHistory = canvasHistory.slice(0, currentHistoryIndex + 1);
+        }
+        // 캔버스 현재 상태 저장
+        const imageData = canvas.toDataURL();
+        canvasHistory.push(imageData);
+        currentHistoryIndex = canvasHistory.length - 1;
+        
+        // 히스토리 크기 제한 (메모리 관리)
+        if (canvasHistory.length > 10) {
+            canvasHistory.shift();
+            currentHistoryIndex--;
+        }
+    }
+
+    // 저장된 캔버스 상태 복원
+    function restoreCanvasState(index) {
+        if (index >= 0 && index < canvasHistory.length) {
+            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = canvasHistory[index];
+            currentHistoryIndex = index;
+        }
+    }
+    
     // 지우기 버튼
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
+            // 클리어 전 현재 상태 저장
+            saveCanvasState();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 클리어 후 상태 저장
+            saveCanvasState();
         });
     }
     
@@ -454,9 +564,14 @@ function setupCroquisCanvas() {
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         
+        const clientX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
+        
+        if (!clientX || !clientY) return null;
+        
         return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
         };
     }
     
@@ -464,8 +579,13 @@ function setupCroquisCanvas() {
     function startDrawing(e) {
         isDrawing = true;
         const pos = getExactMousePosition(e);
+        if (!pos) return;
+        
         lastX = pos.x;
         lastY = pos.y;
+        
+        // 그리기 시작 전 캔버스 상태 저장
+        saveCanvasState();
     }
     
     // 그리기
@@ -473,6 +593,8 @@ function setupCroquisCanvas() {
         if (!isDrawing) return;
         
         const pos = getExactMousePosition(e);
+        if (!pos) return;
+        
         const currentX = pos.x;
         const currentY = pos.y;
         
@@ -520,7 +642,11 @@ function setupCroquisCanvas() {
     }
     
     // 그리기 종료
-    function stopDrawing() {
+    function stopDrawing(e) {
+        if (!isDrawing) return;
+        
+        // 그리기 종료 후 캔버스 상태 저장
+        saveCanvasState();
         isDrawing = false;
     }
     
@@ -533,29 +659,47 @@ function setupCroquisCanvas() {
     // 터치 이벤트 처리
     canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
+        if (e.touches && e.touches.length > 0) {
+            const touch = e.touches[0];
+            startDrawing({
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+        }
+    }, { passive: false });
     
     canvas.addEventListener('touchmove', function(e) {
         e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
+        if (e.touches && e.touches.length > 0) {
+            const touch = e.touches[0];
+            draw({
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+        }
+    }, { passive: false });
     
     canvas.addEventListener('touchend', function(e) {
         e.preventDefault();
-        const mouseEvent = new MouseEvent('mouseup', {});
-        canvas.dispatchEvent(mouseEvent);
-    });
+        // 마지막 터치 위치 가져오기
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            const touch = e.changedTouches[0];
+            stopDrawing({
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+        } else {
+            // 터치 좌표가 없는 경우
+            isDrawing = false;
+            saveCanvasState(); // 어쨌든 상태 저장
+        }
+    }, { passive: false });
+    
+    canvas.addEventListener('touchcancel', function(e) {
+        e.preventDefault();
+        isDrawing = false;
+        saveCanvasState(); // 상태 저장
+    }, { passive: false });
     
     // 참고 이미지 관련 변수
     let currentCategory = 'person';
@@ -638,6 +782,9 @@ function setupCroquisCanvas() {
     if (referenceImage) {
         referenceImage.src = 'images/reference/person1.jpg';
     }
+    
+    // 초기 캔버스 상태 저장
+    saveCanvasState();
 }
 
 // Function to load SVG placeholders until real images are available
