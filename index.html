@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>추상화와 크로키 배우기</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>추상화와 크로키 배우기</h1>
+            <p>4-6학년 어린이를 위한 미술 그리기 앱</p>
+            <div class="mode-tabs">
+                <button id="abstract-mode-btn" class="mode-btn active">추상화 모드</button>
+                <button id="croquis-mode-btn" class="mode-btn">크로키 모드</button>
+            </div>
+        </header>
+        
+        <div id="abstract-mode" class="mode-content active">
+            <div class="content">
+                <div class="instruction-panel">
+                    <h2>추상화란?</h2>
+                    <p>추상화는 현실의 대상을 단순하게 표현하는 미술 방식이에요. 복잡한 형태를 기본 도형과 색상으로 표현할 수 있어요.</p>
+                    
+                    <div class="example-gallery">
+                        <h3>예시 보기</h3>
+                        <div class="examples">
+                            <div class="example" id="example1">
+                                <img src="images/example1.png" alt="추상화 예시 1">
+                                <p>기하학적 추상화</p>
+                            </div>
+                            <div class="example" id="example2">
+                                <img src="images/example2.png" alt="추상화 예시 2">
+                                <p>색상 추상화</p>
+                            </div>
+                            <div class="example" id="example3">
+                                <img src="images/example3.png" alt="추상화 예시 3">
+                                <p>자연 추상화</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tools">
+                        <h3>그리기 도구</h3>
+                        <button id="circle-btn" class="tool-btn">원</button>
+                        <button id="square-btn" class="tool-btn">사각형</button>
+                        <button id="triangle-btn" class="tool-btn">삼각형</button>
+                        <button id="line-btn" class="tool-btn">선</button>
+                        <button id="free-btn" class="tool-btn">자유롭게 그리기</button>
+                        <input type="color" id="color-picker" value="#FF4136">
+                        <button id="clear-btn" class="action-btn">모두 지우기</button>
+                        <button id="save-btn" class="action-btn">저장하기</button>
+                    </div>
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="drawing-canvas" width="600" height="450"></canvas>
+                </div>
+            </div>
+            
+            <div class="steps">
+                <h2>추상화 그리는 방법</h2>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <p>주변에서 그리고 싶은 대상을 생각해보세요. (예: 나무, 집, 사람)</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <p>대상의 중요한 특징만 남기고 단순화해보세요.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <p>단순한 도형과 선으로 표현해보세요.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <p>마음에 드는 색상으로 채워보세요.</p>
+                </div>
+            </div>
+            
+            <div class="gallery">
+                <h2>친구들의 작품</h2>
+                <div class="gallery-items">
+                    <div class="gallery-item">
+                        <img src="images/student1.png" alt="학생 작품 1">
+                        <p>기하학적 풍경</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="images/student2.png" alt="학생 작품 2">
+                        <p>색상의 향연</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="images/student3.png" alt="학생 작품 3">
+                        <p>도시의 밤</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="croquis-mode" class="mode-content">
+            <div class="content">
+                <div class="instruction-panel">
+                    <h2>크로키란?</h2>
+                    <p>크로키는 짧은 시간 안에 대상의 형태와 특징을 빠르게 스케치하는 방법이에요. 세부적인 표현보다는 전체적인 형태와 느낌을 잡는 것이 중요해요.</p>
+                    
+                    <div class="example-gallery">
+                        <h3>크로키 예시</h3>
+                        <div class="examples">
+                            <div class="example" id="croquis-example1">
+                                <img src="images/croquis1.png" alt="크로키 예시 1">
+                                <p>인물 크로키</p>
+                            </div>
+                            <div class="example" id="croquis-example2">
+                                <img src="images/croquis2.png" alt="크로키 예시 2">
+                                <p>동물 크로키</p>
+                            </div>
+                            <div class="example" id="croquis-example3">
+                                <img src="images/croquis3.png" alt="크로키 예시 3">
+                                <p>사물 크로키</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tools">
+                        <h3>크로키 도구</h3>
+                        <button id="pencil-btn" class="tool-btn">연필</button>
+                        <button id="charcoal-btn" class="tool-btn">목탄</button>
+                        <button id="pen-btn" class="tool-btn">펜</button>
+                        <button id="eraser-btn" class="tool-btn">지우개</button>
+                        <div class="thickness-control">
+                            <label for="thickness-slider">선 굵기:</label>
+                            <input type="range" id="thickness-slider" min="1" max="20" value="3">
+                        </div>
+                        <button id="croquis-clear-btn" class="action-btn">모두 지우기</button>
+                        <button id="croquis-save-btn" class="action-btn">저장하기</button>
+                    </div>
+                    
+                    <div class="timer-control">
+                        <h3>타이머</h3>
+                        <div class="timer-buttons">
+                            <button id="timer-30s" class="timer-btn">30초</button>
+                            <button id="timer-1m" class="timer-btn">1분</button>
+                            <button id="timer-5m" class="timer-btn">5분</button>
+                            <button id="timer-stop" class="timer-btn">중지</button>
+                        </div>
+                        <div id="timer-display">00:00</div>
+                    </div>
+                    
+                    <div class="reference-control">
+                        <h3>크로키 참고 이미지</h3>
+                        <div class="reference-buttons">
+                            <button id="ref-person" class="ref-btn">인물</button>
+                            <button id="ref-animal" class="ref-btn">동물</button>
+                            <button id="ref-object" class="ref-btn">사물</button>
+                            <button id="ref-next" class="ref-btn">다음 이미지</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="croquis-container">
+                    <div class="reference-image-container">
+                        <img id="reference-image" src="images/reference/person1.jpg" alt="크로키 참고 이미지">
+                    </div>
+                    <canvas id="croquis-canvas" width="600" height="450"></canvas>
+                </div>
+            </div>
+            
+            <div class="steps">
+                <h2>크로키 그리는 방법</h2>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <p>참고 이미지를 잘 관찰하고 전체적인 형태를 파악하세요.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <p>큰 형태부터 빠르게 스케치하세요. 세부보다는 전체 윤곽에 집중하세요.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <p>주어진 시간 안에 가능한 많은 정보를 담아보세요.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <p>다양한 선의 굵기와 강약을 표현해보세요.</p>
+                </div>
+            </div>
+            
+            <div class="gallery">
+                <h2>친구들의 크로키</h2>
+                <div class="gallery-items">
+                    <div class="gallery-item">
+                        <img src="images/croquis-student1.png" alt="크로키 학생 작품 1">
+                        <p>인물 크로키</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="images/croquis-student2.png" alt="크로키 학생 작품 2">
+                        <p>동물 크로키</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="images/croquis-student3.png" alt="크로키 학생 작품 3">
+                        <p>사물 크로키</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>초등학생을 위한 미술 그리기 앱 &copy; 2023</p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html> 
